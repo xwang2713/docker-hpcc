@@ -5,8 +5,8 @@ RUN yum install -y curl
 RUN chmod u+s $(which ping)
 #RUN groupadd hpcc && useradd -s /bin/bash -r -m -d /home/hpcc -g hpcc -c "hpcc Runtime User" hpcc
 
-ENV VERSION 7.0.0
-ENV FULL_VERSION 7.0.0-1
+ENV VERSION 7.0.2
+ENV FULL_VERSION 7.0.2-1
 #ENV PLATFORM_DOWNLOAD_MD5  c435045d4319880f141e8faf23555b83
 ENV PLATFORM_PACKAGE hpccsystems-platform-community_${FULL_VERSION}.el7.x86_64.rpm
 

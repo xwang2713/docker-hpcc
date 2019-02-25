@@ -20,6 +20,7 @@ services:
     # tty: true
     environment:
      #- HOST_IP=172.17.0.1
+      - CLOUD_PLATFORM=docker-stack
       - TOPOLOGY=default
     networks:
       - ovnet
