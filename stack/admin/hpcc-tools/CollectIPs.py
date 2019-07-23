@@ -27,8 +27,8 @@ class CollectIPs(object):
             if not os.path.exists(self._out_dir):
                 os.makedirs(self._out_dir)
 
-            if input_fn.lower().endswith('.json'):
-                print("550 " + input_fn);
+            if input_fn.lower().endswith('.json') or \
+               input_fn.lower().endswith('.lst'):
                 self.retrieveIPsFromCloud(input_fn)
             else:
                 print("Unsupport input file extension\n")
@@ -69,7 +69,6 @@ class CollectIPs(object):
                     self.out_dir = value
                 elif arg in ("-i", "--in-file"):
                     input_filename = value
-            print("500");
 
             self.retrieveIPs("", input_filename)
 

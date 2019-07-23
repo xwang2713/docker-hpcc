@@ -17,15 +17,17 @@ class CollectIPsFromKube (CollectIPs):
 
 
     def retrieveIPsFromCloud(self, input_fn):
-        with open(input_fn) as json_file:
-            network_data = json.load(json_file)
-            #print("open json file")
-            #print(repr(network_data))
         self.clean_dir(self._out_dir)
+        with open(input_fn) as pods_ip_file:
+           lines = pods_ip_file.readlines()
 
-        #print(repr(network_data['Containers']))
-        for key in network_data['Containers']:
-            node_name = (network_data['Containers'][key]['Name']).split('_')[1].split('.')[0]
+        for line in lines:
+            full_node_name,node_ip = line.split(' ')
+            node_name_items =  full_node_name.split('-')
+            if ( len(node_name_items) >= 3 ):
+                node_name = node_name_items[0] + "-" + node_name_items[1] 
+            else:
+                node_name = node_name_items[0] 
             if ( node_name.startswith('admin')     or
                  node_name.startswith('dali')      or
                  node_name.startswith('esp')       or
@@ -40,11 +42,10 @@ class CollectIPsFromKube (CollectIPs):
                  node_name.startswith('spark')     or
                  node_name.startswith('node')):
                 print("node name: " + node_name)
-                node_ip = (network_data['Containers'][key]['IPv4Address']).split('/')[0]
                 print("node ip: " + node_ip)
                 self.write_to_file(self._out_dir, node_name, node_ip + ";")
 
 if __name__ == '__main__':
 
-    cip = CollectIPsFromDocker()
+    cip = CollectIPsFromKube()
     cip.main()

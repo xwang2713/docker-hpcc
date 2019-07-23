@@ -1,11 +1,11 @@
 version: "3"
 services:
   support:
-    image: hpccsystems/hpcc:7-rc
+    image: hpccsystems/hpcc-m:latest
     networks:
       - ovnet
   esp:
-    image: hpccsystems/hpcc:7-rc
+    image: hpccsystems/hpcc-m:latest
     ports:
       - "8010:8010"
       - "8002:8002"
@@ -13,7 +13,7 @@ services:
     networks:
       - ovnet
   admin:
-    image: hpccsystems/hpcc-m:7-admin-s
+    image: hpccsystems/hpcc-m:admin
     ports:
       - "8015:8015"
     # privileged: true
@@ -25,13 +25,13 @@ services:
     networks:
       - ovnet
   thor-mythor:
-    image: hpccsystems/hpcc:7-rc
+    image: hpccsystems/hpcc-m:latest
     deploy:
       replicas: 2
     networks:
       - ovnet
   roxie-myroxie:
-    image: hpccsystems/hpcc:7-rc
+    image: hpccsystems/hpcc-m:latest
     deploy:
       replicas: 2
     networks:

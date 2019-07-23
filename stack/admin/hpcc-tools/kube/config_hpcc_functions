@@ -196,8 +196,8 @@ function collect_ips()
   trials=3
   while [ $trials -gt 0 ]
   do
-    [ $notGetIps -eq 0 ] &&  ${SCRIPT_DIR}/kube/get_ips.sh
-    ${SCRIPT_DIR}/../CollectIPsFromKube.py -d ${ipDir} -i /tmp/${cluster_ips}
+    [ $notGetIps -eq 0 ] &&  ${SCRIPT_DIR}/kube/get_pods.py
+    ${SCRIPT_DIR}/kube/CollectIPsFromKube.py -d ${ipDir} -i /tmp/${cluster_ips}
     [ $? -eq 0 ] && break
     trials=$(expr $trials \- 1)
     sleep 5

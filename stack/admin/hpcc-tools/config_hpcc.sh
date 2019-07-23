@@ -2,8 +2,9 @@
 
 SCRIPT_DIR=$(dirname $0)
 
-if [ "${CLOUD_PLATFORM}" = "kubernetes" ]
+if [ -n "${KUBERNETES_PORT}" ]
 then
+   CLOUD_PLATFORM=kubernetes
    source ${SCRIPT_DIR}/kube/config_hpcc_functions
 else
    source ${SCRIPT_DIR}/docker/config_hpcc_functions
@@ -15,11 +16,11 @@ function usage()
     cat <<EOF
     Usage: $(basename $0) <options>
       <options>:
-      -a: app name. The default is hpcc
+      -a: app name for docker stack. The default is hpcc
       -D: HPCC home directory. The default is /opt/HPCCSystems
       -d: directory to save collecting ips. The default is /tmp/ips
       -e: number of esp nodes. The default is 1
-      -n: network name. The default is <appName>_ovnet.
+      -n: network name for docker stack. The default is <appName>_ovnet.
       -N: do not push environment.xml and restart environment.xml
       -r: number of roxie nodes
       -s: number of support nodes
@@ -28,7 +29,8 @@ function usage()
           and environment.xml with real ip. Re-generate ansible host file,
           run updtdalienv and restart thor master.
       -x: do not retrieve cluster ips. The ips should be under directory /tmp/
-          cluster ips file name <app name>_<network name.json
+          cluster ips file name <app name>_<network name.json for docker and
+          pods_ip.lst kubernetes
       -X  do not generate environmen.xml which may be created with configmgr
 
 EOF
@@ -118,15 +120,15 @@ function create_complex_envxml()
 
    support_nodes=$(cat ${ipDir}/support | wc -l)
 
-   #if [ -n "${ESP_NODES}" ]
-   #then
-   #     esp_nodes=${ESP_NODES}
-   #elif [ -e ${ipDir}/esp ]
-   #then
-   #     esp_nodes=0
-   #else
-   #     esp_nodes=1
-   #fi
+   if [ -n "${ESP_NODES}" ]
+   then
+        esp_nodes=${ESP_NODES}
+   elif [ -e ${ipDir}/esp ]
+   then
+        esp_nodes=0
+   else
+        esp_nodes=1
+   fi
 
    if [ -n "${THOR_NODES}" ]
    then
@@ -144,7 +146,7 @@ function create_complex_envxml()
 
    cmd="$SUDOCMD ${HPCC_HOME}/sbin/envgen2 -env ${wkDir}/env_base.xml   \
        -thornodes ${thor_nodes} -slavesPerNode ${slaves_per_node} \
-       -espnodes 1 -roxienodes ${roxie_nodes} \
+       -espnodes ${esp_nodes} -roxienodes ${roxie_nodes} \
        -supportnodes ${support_nodes} -roxieondemand 1 \
        -ipfile ${ipDir}/support"
 
@@ -341,7 +343,14 @@ ps -efa | grep -v sshd |  grep -q sshd ||  $SUDOCMD mkdir -p /var/run/sshd; $SUD
 #------------------------------------------
 # Collect containers' ips
 #
-cluster_ips=${networkName}.json
+if [ "${CLOUD_PLATFORM}" = "kubernetes" ]
+then
+  # This is Kubernetes
+  cluster_ips="pods_ip.lst"
+else
+  # This is Docker Stack
+  cluster_ips=${networkName}.json
+fi
 [ -d ${ipDir} ] && rm -rf ${ipDir}
 collect_ips
 
