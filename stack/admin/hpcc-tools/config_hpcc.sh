@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash -x
 
 SCRIPT_DIR=$(dirname $0)
 
@@ -123,7 +123,7 @@ function create_complex_envxml()
    if [ -n "${ESP_NODES}" ]
    then
         esp_nodes=${ESP_NODES}
-   elif [ -e ${ipDir}/esp ]
+   elif [ -e ${ipDir}/esp-* ]
    then
         esp_nodes=0
    else
@@ -144,7 +144,7 @@ function create_complex_envxml()
        roxie_nodes=0
    fi
 
-   cmd="$SUDOCMD ${HPCC_HOME}/sbin/envgen2 -env ${wkDir}/env_base.xml   \
+   cmd="$SUDOCMD ${HPCC_HOME}/sbin/envgen2 -env ${wkDir}/${ENV_XML_FILE} \
        -thornodes ${thor_nodes} -slavesPerNode ${slaves_per_node} \
        -espnodes ${esp_nodes} -roxienodes ${roxie_nodes} \
        -supportnodes ${support_nodes} -roxieondemand 1 \
@@ -162,34 +162,33 @@ function create_complex_envxml()
    if [ -e ${ipDir}/dali ]
    then
       ip=$(cat ${ipDir}/dali | sed 's/[[:space:]]//g; s/;//g')
-      $SUDOCMD ${HPCC_HOME}/sbin/envgen2 -env-in ${wkDir}/env_base.xml \
-          -env-out ${wkDir}/env_dali.xml  -mod-node dali#mydali@ip=${ip}
+      $SUDOCMD ${HPCC_HOME}/sbin/envgen2 -env-in ${wkDir}/${ENV_XML_FILE} \ 
+          -env-out ${wkDir}/${ENV_XML_FILE} -mod-node dali#mydali@ip=${ip}
    fi
 
-   if [ -e ${ipDir}/esp ]
+   if [ -e ${ipDir}/esp-* ]
    then
       esp_ip=$(${HPCC_HOME}/sbin/configgen -env ${wkDir}/env_dali.xml -listall2 | grep EspProcess | cut -d',' -f3)
-      cmd="$SUDOCMD ${HPCC_HOME}/sbin/envgen2 -env-in ${wkDir}/env_dali.xml -env-out ${wkDir}/env_esp0.xml \
+      cmd="$SUDOCMD ${HPCC_HOME}/sbin/envgen2 -env-in ${wkDir}/${ENV_XML_FILE} -env-out ${wkDir}/${ENV_XML_FILE} \
            -rmv sw:esp#myesp:Instance@netAddress=${esp_ip}"
       echo "$cmd"
       eval "$cmd"
-   else
-      cp ${wkDir}/env_dali.xml  ${wkDir}/env_esp0.xml
    fi
 
-   add_comp_to_envxml esp myesp ${wkDir}/env_esp0.xml ${wkDir}/env_esp.xml
-   add_roxie_to_envxml ${wkDir}/env_esp.xml ${wkDir}/env_roxie.xml
-   add_thor_to_envxml ${wkDir}/env_roxie.xml ${wkDir}/env_thor.xml
-   add_comp_to_envxml eclcc myeclccserver ${wkDir}/env_thor.xml ${wkDir}/env_eclcc.xml
-   add_comp_to_envxml scheduler myscheduler ${wkDir}/env_eclcc.xml ${wkDir}/env_scheduler.xml
-   add_comp_to_envxml spark mysparkthor ${wkDir}/env_scheduler.xml ${wkDir}/env_spark.xml
+   add_comp_to_envxml esp myesp ${wkDir}/${ENV_XML_FILE} ${wkDir}/${ENV_XML_FILE} 
+   add_roxie_to_envxml ${wkDir}/${ENV_XML_FILE} ${wkDir}/${ENV_XML_FILE} 
+   add_thor_to_envxml ${wkDir}/${ENV_XML_FILE} ${wkDir}/${ENV_XML_FILE} 
+   add_comp_to_envxml eclcc myeclccserver ${wkDir}/${ENV_XML_FILE} ${wkDir}/${ENV_XML_FILE} 
+   add_comp_to_envxml scheduler myscheduler ${wkDir}/${ENV_XML_FILE} ${wkDir}/${ENV_XML_FILE} 
+   add_comp_to_envxml spark mysparkthor ${wkDir}/${ENV_XML_FILE} ${wkDir}/${ENV_XML_FILE} 
 
    # Create topology
-   create_topology ${wkDir}/env_spark.xml ${wkDir}/env_topo.xml
+   create_topology ${wkDir}/${ENV_XML_FILE} ${wkDir}/${ENV_XML_FILE} 
 
    # Override attributes
-   cmd="$SUDOCMD ${HPCC_HOME}/sbin/envgen2 -env-in ${wkDir}/env_topo.xml \
-       -env-out ${wkDir}/environment.xml \
+   ${ENV_XML_FILE} 
+   cmd="$SUDOCMD ${HPCC_HOME}/sbin/envgen2 -env-in ${wkDir}/${ENV_XML_FILE} \
+       -env-out ${wkDir}/${ENV_XML_FILE}  \
        -override roxie,@copyResources,true \
        -override roxie,@roxieMulticastEnabled,false \
        -override thor,@replicateOutputs,true \

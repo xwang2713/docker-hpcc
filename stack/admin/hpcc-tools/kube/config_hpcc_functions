@@ -5,38 +5,32 @@ function add_comp_to_envxml()
     env_in=$3
     env_out=$4
 
-    # If nothing to process
-    cp $env_in  $env_out
 
     [ ! -e ${ipDir}/${_comp}* ] && return
 
-    index=1
-    env_in_tmp=${env_in}
-    env_out_tmp=${wkDir}/tmp/env_out_tmp_${index}.xml
+    env_in_temp=$env_in 
+    env_out_temp=/tmp/env-out.xml
     ls ${ipDir} | grep ${_comp}* | while read ip_file
     do
         name=$(echo ${ip_file} | cut -d '-' -s -f 2)
         [ -z "$name" ] && name=$_default_name
-        cmd="$SUDOCMD ${HPCC_HOME}/sbin/envgen2 -env-in $env_in_tmp -env-out $env_out_tmp \
+        cmd="$SUDOCMD ${HPCC_HOME}/sbin/envgen2 -env-in $env_in_temp -env-out $env_out_temp \
              -add-node ${_comp}#${name}@ipfile=${ipDir}/${ip_file}"
 
         comp_opts_var="$(echo "$ip_file" | tr 'a-z' 'A-Z' | tr '-' '_')_OPTS"
         comp_opts=${!comp_opts_var}
-        [ -n "comp_opts" ] && cmd="$cmd -mod sw:${_comp}#${name}@${comp_opts}"
+        [ -n "${comp_opts}" ] && cmd="$cmd -mod sw:${_comp}#${name}@${comp_opts}"
 
         inst_comp_opts_var="INSTANCE_${comp_opts_var}"
         inst_comp_opts=${!inst_comp_opts_var}
-        [ -n "inst_comp_opts" ] && cmd="$cmd -mod sw:${_comp}#${name}:instance@${inst_comp_opts}"
+        [ -n "${inst_comp_opts}" ] && cmd="$cmd -mod sw:${_comp}#${name}:instance@${inst_comp_opts}"
 
         echo "$cmd"
         eval "$cmd"
 
-        cp ${env_out_tmp}  ${env_out}
-
-        index=$(expr $index \+ 1)
-        env_in_tmp=${env_out_tmp}
-        env_out_tmp=${wkDir}/tmp/env_out_tmp_${index}.xml
+        [ "$env_in_tmp" != "${env_out_temp}" ] &&  env_in_temp=${env_out_temp}
     done
+    cp $env_out_temp $env_out
 }
 
 function add_roxie_to_envxml()
@@ -44,32 +38,28 @@ function add_roxie_to_envxml()
     env_in=$1
     env_out=$2
 
-    # If nothing to process
-    cp $env_in  $env_out
-
     [ ! -e ${ipDir}/roxie* ] && return
 
-    index=1
-    env_in_tmp=${env_in}
-    env_out_tmp=${wkDir}/tmp/env_out_tmp_${index}.xml_
+    env_in_temp=$env_in 
+    env_out_temp=/tmp/roxie_env_out.xml
     ls ${ipDir} | grep roxie* | while read ip_file
     do
         roxie_name=$(echo ${ip_file} | cut -d '-' -s -f 2)
         [ -z "$roxie_name" ] && roxie_name=myroxie
 
         # Add roxie nodes
-        env_out_tmp=${wkDir}/tmp/env_roxie_${index}.xml
-        echo "$SUDOCMD ${HPCC_HOME}/sbin/envgen2 -env-in $env_in_tmp -env-out ${env_out_tmp} \
+        echo "$SUDOCMD ${HPCC_HOME}/sbin/envgen2 -env-in ${env_in_temp} -env-out ${env_out_temp} \
              -add-node roxie#${roxie_name}@ipfile=${ipDir}/${ip_file}"
-        $SUDOCMD ${HPCC_HOME}/sbin/envgen2 -env-in $env_in_tmp -env-out ${env_out_tmp} \
+        $SUDOCMD ${HPCC_HOME}/sbin/envgen2 -env-in ${env_in_temp} -env-out ${env_out_temp} \
              -add-node roxie#${roxie_name}@ipfile=${ipDir}/${ip_file}
 
-        cp ${env_out_tmp}  ${env_out}
+        # todo process property file
 
-        index=$(expr $index \+ 1)
-        env_in_tmp=${env_out_tmp}
-        env_out_tmp=${wkDir}/tmp/env_out_tmp_${index}.xml
+        [ "$env_in_temp" != "${env_out_temp}" ] &&  env_in_temp=${env_out_temp}
     done
+    cp ${env_out_temp}  ${env_out}
+
+
 }
 
 function add_thor_to_envxml()
@@ -77,24 +67,20 @@ function add_thor_to_envxml()
     env_in=$1
     env_out=$2
 
-    # If nothing to process
-    cp $env_in  $env_out
-
     [ ! -e ${ipDir}/thor-* ] && return
 
-    index=1
-    master_index=1  # In chance no master thor provided and there are multiple support nodes
-    env_in_tmp=${env_in}
-    env_out_tmp=${wkDir}/tmp/env_out_tmp_${index}.xml
-    ls ${ipDir} | grep thor-* | while read ip_file
+    env_in_temp=${env_in}
+    env_out_temp=/tmp/thor_env_out.xml
+    master_index=1 # in chance we need multiple thor masters from suppport nodes
+    ls ${ipDir} | grep "thor-" | while read ip_file
     do
         thor_name=$(echo ${ip_file} | cut -d '-' -s -f 2)
         [ -z "$thor_name" ] && thor_name=mythor
 
         # Add thor master node
-        if [ -e ${ipDir}/thormaster_${thor_name} ]
+        if [ -e ${ipDir}/thormaster-${thor_name} ]
         then
-           master_ip=$(cat ${ipDir}/thormaster_${thor_name}* | sed 's/;//g')
+           master_ip=$(cat ${ipDir}/thormaster-${thor_name}* | sed 's/;//g')
         else
            master_ip=$(cat ${ipDir}/support | head -n ${master_index} | tail -n 1 | sed 's/;//g')
            let master_index="($master_index + 1)  % ${support_nodes} + 1"
@@ -102,7 +88,7 @@ function add_thor_to_envxml()
 
         # Add thor nodes
 
-        cmd="$SUDOCMD ${HPCC_HOME}/sbin/envgen2 -env-in $env_in_tmp -env-out ${env_out_tmp}"
+        cmd="$SUDOCMD ${HPCC_HOME}/sbin/envgen2 -env-in $env_in_temp -env-out ${env_out_temp}"
         cmd="$cmd -add-node thor#${thor_name}:master@ip=${master_ip}:slave@ipfile=${ipDir}/${ip_file}"
 
         #thor_name
@@ -128,24 +114,36 @@ function add_thor_to_envxml()
         echo "$cmd"
         eval "$cmd"
 
-        cp ${env_out_tmp}  ${env_out}
-
-        index=$(expr $index \+ 1)
-        env_in_tmp=${env_out_tmp}
-        env_out_tmp=${wkDir}/tmp/env_out_tmp_${index}.xml
+        [ "$env_in_temp" != "${env_out_temp}" ] &&  env_in_temp=${env_out_temp}
     done
+    cp ${env_out_temp}  ${env_out}
 }
 
+function get_prop_value()
+{
+   prop_file_name=$1
+   prop_key=$2
+   default_value=$3
+
+   line=$(cat $prop_file_name | grep "^[[:space:]]*${prop_key}[[:space:]]*=") 
+   line=$(echo $line | xargs)
+   if [ -n "$line" ]
+   then
+      echo $line | cut -d '=' -f2 | xargs
+   else
+      echo "$default_value"
+   fi
+}
 function create_topology()
 {
     env_in=$1
     env_out=$2
 
-    # If nothing to process
-    cp $env_in  $env_out
-    [ -z "$TOPOLOGY" ] && return
-
-    if [ "$TOPOLOGY" = "default" ]
+    topo_props=/etc/hpcc_config_map/topology.properties
+    [ ! -e "$topo_props" ] && return
+    
+    cat  $topo_props | grep -q "^[[:space:]]*default=true"
+    if [ $? -eq 0 ]
     then
         cmd="$SUDOCMD ${HPCC_HOME}/sbin/envgen2 -env-in $env_in -env-out ${env_out} -add-topology default"
         echo "$cmd"
@@ -153,41 +151,47 @@ function create_topology()
         return
     fi
 
-    env_in_tmp=${env_in}
-    index=1
-    env_out_tmp=${wkDir}/tmp/env_topo_tmp_${index}.xml
-    for topology in $(echo $TOPOLOGY | tr '#' ' ')
+    # Add Topology for roxie
+    env_in_temp=${env_in}
+    env_out_temp=/tmp/topo_env_out.xml
+    ls ${ipDir} | grep "roxie-\|thor-" | while read cluster
     do
-       #echo ""
-       topo_name=$(echo $topology | cut -d'%' -f1)
-       #echo "Topology name $topo_name"
-       topo_body=$(echo $topology | cut -d'%' -f2)
+        echo $cluster | grep -q "roxie" 
+        if [ $? -eq 0 ]
+        then
+           cluster_tag=RoxieCluster
+        else
+           cluster_tag=ThorCluster
+        fi
+        name=$(echo ${cluster} | cut -d '-' -s -f 2)
+        topo_name=$(get_prop_value $topo_props "${cluster_name}.topology" "topology") 
+        cluster_name=$(get_prop_value $topo_props "${name}.name" $name) 
+        #get_prop_value $topo_props "${name}.name" $name 
+        cmd="$SUDOCMD ${HPCC_HOME}/sbin/envgen2 -env-in ${env_in_temp} -env-out ${env_out_temp} -add-topology ${topo_name}:cluster@name=${cluster_name}"
 
-       for cluster in $(echo $topo_body | tr ';' ' ')
-       do
-          cluster_name=$(echo $cluster | cut -d':' -f1)
-          cluster_body=$(echo $cluster | cut -d':' -f2)
-          #echo "  cluster name:  $cluster_name"
+        cmd="${cmd}:${cluster_tag}@process=${name}"
 
-          cmd="$SUDOCMD ${HPCC_HOME}/sbin/envgen2 -env-in $env_in_tmp -env-out ${env_out_tmp} -add-topology ${topo_name}:cluster@name=${cluster_name}"
-          for process in $(echo $cluster_body | tr ',' ' ')
-          do
-              process_tag=$(echo $process | cut -d'@' -f1)
-              process_name=$(echo $process | cut -d'@' -f2)
-              #echo "     process: $process_tag name: $process_name"
-              cmd="${cmd}:${process_tag}@process=${process_name}"
-          done
+        eclcc=$(get_prop_value $topo_props "${name}.eclccserver" "myeclccserver") 
+        cmd="${cmd}:EclCCServerProcess@process=${eclcc}"
 
-          echo "$cmd"
-          eval "$cmd"
+        eclscheduler=$(get_prop_value $topo_props "${name}.eclscheduler" "myeclscheduler") 
+        cmd="${cmd}:EclSchedulerProcess@process=${eclscheduler}"
 
-          cp ${env_out_tmp}  ${env_out}
+        if [ "$cluster_tag" = "ThorCluster" ]
+        then
+           eclagent=$(get_prop_value $topo_props "${name}.eclagent" "myeclagent") 
+           cmd="${cmd}:EclAgentProcess@process=${eclagent}"
+        fi
 
-          index=$(expr $index \+ 1)
-          env_in_tmp=${env_out_tmp}
-          env_out_tmp=${wkDir}/tmp/env_topo_tmp_${index}.xml
-       done
+        echo "$cmd"
+        eval "$cmd"
+
+        [ "$env_in_temp" != "${env_out_temp}" ] &&  env_in_temp=${env_out_temp}
+
     done
+
+    cp ${env_out_temp}  ${env_out}
+
 }
 
 function collect_ips()

@@ -23,12 +23,15 @@ class CollectIPsFromKube (CollectIPs):
 
         for line in lines:
             full_node_name,node_ip = line.split(' ')
+            node_ip = node_ip.rstrip('\r\n')
             node_name_items =  full_node_name.split('-')
             if ( len(node_name_items) >= 3 ):
                 node_name = node_name_items[0] + "-" + node_name_items[1] 
+            elif node_name_items[0] == 'thormaster':
+                node_name = node_name_items[0] + '-' + node_name_items[1]  
             else:
                 node_name = node_name_items[0] 
-            if ( node_name.startswith('admin')     or
+            if ( 'admin' in node_name              or
                  node_name.startswith('dali')      or
                  node_name.startswith('esp')       or
                  node_name.startswith('thor')      or
