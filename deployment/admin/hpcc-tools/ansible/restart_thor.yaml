@@ -2,7 +2,7 @@
 ---
 - name: Execute a script.
   hosts: 'thor'
-  remote_user: 'root'
+  remote_user: 'hpcc'
   tasks:
      - name: Execute the script
-       command: bash /etc/init.d/hpcc-init -c '{{thor_name}}' start
+       command: sudo /etc/init.d/hpcc-init -c '{{thor_name}}' start

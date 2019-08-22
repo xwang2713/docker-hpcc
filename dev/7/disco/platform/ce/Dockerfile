@@ -1,7 +1,7 @@
 From hpccsystems/hpcc-dev:7-disco AS disco-builder
 # Usage: sudo docker build -t <image tag> --build-arg branch=<HPCC branch or tag> --build-arg owner=<project owner> .
 # The default branch is "master". The default github user is "hpcc-systems".
-# user/password is for clone non-public project such as LN.
+# user/password is used to clone non-public project such as LN.
 ARG branch=
 ARG owner="hpcc-systems"
 ARG user=
@@ -21,8 +21,7 @@ RUN set -ex; \
       if [ -n "${tag}" ]; \
       then \
          git fetch && git fetch --tags; \
-      else : ; \
-      fi; \
+      else : ;  fi; \
       git checkout ${branch}; \
    else : ; fi; \
    git submodule update --init --recursive; \

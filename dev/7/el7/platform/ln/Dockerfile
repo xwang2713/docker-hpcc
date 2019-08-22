@@ -25,13 +25,13 @@ RUN set -ex; \
    cd HPCC-Platform; \
    if [ -n "${branch}" ] ; \
    then \
-      git tag | grep ${branch}; \
-      if [ $? -eq 0 ]; \
+      rc=$(git tag | grep ${branch}) || : ; \
+      if [ "$rc" ]; \
       then \
          git fetch && git fetch --tags; \
-      fi; \
+      else : ; fi; \
       git checkout ${branch}; \
-   fi; \
+   else : ; fi; \
    git submodule update --init --recursive; \
    cd ..; \
    if [ -z "${ln_user}" ] ; \
@@ -51,7 +51,7 @@ RUN set -ex; \
       fi; \
       git checkout ${branch}; \
       cd .. ; \
-   fi; \
+   else : ; fi; \
    mkdir -p build; \
    cd build; \
    rm -rf * ; \
@@ -92,6 +92,6 @@ RUN set -ex; \
    yum install --nogpgcheck -y hpccsystems*.rpm; \
    rm -rf  hpccsystems*.rpm
 
-RUN cp -r /home/hpcc/.ssh ~/
+#RUN cp -r /home/hpcc/.ssh ~/
 ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["/usr/sbin/sshd", "-D"]

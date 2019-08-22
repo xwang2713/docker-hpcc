@@ -15,11 +15,11 @@ RUN set -ex; \
    cd HPCC-Platform; \
    if [ -n "${branch}" ] ; \
    then \
-      git tag | grep ${branch}; \
+      rc=$(git tag | grep ${branch}) || : ; \
       if [ $? -eq 0 ]; \
       then \
          git fetch && git fetch --tags; \
-      fi; \
+      else : ; fi; \
       git checkout ${branch}; \
    else : ; fi; \
    git submodule update --init --recursive; \

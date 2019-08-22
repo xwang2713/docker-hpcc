@@ -18,6 +18,11 @@ RUN set -ex; \
 
 EXPOSE 8010 8002 8015 9876
 
+#COPY id_rsa* /home/hpcc/.ssh/
+#RUN set -ex; \
+#   chmod 400 /home/hpcc/.ssh/id_rsa; \
+#   chmod 644 /home/hpcc/.ssh/id_rsa.pub
+
 RUN cp -r /home/hpcc/.ssh ~/
 COPY hpcc-tools /opt/hpcc-tools
 ENTRYPOINT ["/docker-entrypoint.sh"]

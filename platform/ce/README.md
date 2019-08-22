@@ -12,17 +12,17 @@ builds@hpccsystems.com
    [https://github.com/hpcc-systems/HPCC-Platform](https://github.com/hpcc-systems/HPCC-Platform)
 
 
-# What is HPCCSystems
+# What is HPCC Systems(r)
 
 The HPCC Systems server platform is a free, open source, massively scalable platform for big data analytics. Download the HPCC Systems server platform now and take the reins of the same core technology that LexisNexis has used for over a decade to analyze massive data sets for its customers in industry, law enforcement, government, and science.
 
 For more information and related downloads for HPCC Systems products, please visit
 https://hpccsystems.com
 
-![alt text](https://hpccsystems.com/sites/default/files/hpcc-systems-horiz.png "HPCCSystems Logo")
+![alt text](https://hpccsystems.com/sites/default/files/hpcc-systems-horiz.png "HPCC Systems Logo")
 
 # How to use this image
-You can start the Docker HPCC image in interactive (-i -t) or daemon mode (-d). You must start the HPCC processes then go to ECLWatch to submit jobs, query, and explore your data with the HPCC Systems platform.
+You can start the Docker HPCC Systems image in interactive (-i -t) or daemon mode (-d). You must start the HPCC Systems processes then go to ECLWatch to submit jobs, query, and explore your data with the HPCC Systems platform.
 
 To start Docker in interactive mode :
 ```
@@ -36,7 +36,7 @@ sudo docker run -d hpccsystems/clienttools
 
 # How is this image build
 ```console
-sudo docker build -t <target image>:<tag> --build-arg version=<HPCC Version> .
+sudo docker build -t <target image>:<tag> --build-arg version=<HPCC Systems Version> .
 ```
 For example,
 ```console

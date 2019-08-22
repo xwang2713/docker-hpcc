@@ -4,7 +4,7 @@
 ---
 - name: Execute a script.
   hosts: '{{ hosts }}'
-  remote_user: 'root'
+  remote_user: 'hpcc'
   tasks:
      - name: Execute the script
-       command: bash /etc/init.d/hpcc-init stop
+       command: sudo /etc/init.d/hpcc-init stop

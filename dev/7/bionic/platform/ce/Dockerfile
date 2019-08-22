@@ -1,7 +1,7 @@
 From hpccsystems/hpcc-dev:7-bionic AS bionic-builder
 # Usage: sudo docker build -t <image tag> --build-arg branch=<HPCC branch or tag> --build-arg owner=<project owner> .
 # The default branch is "master". The default github project owner is "hpcc-systems".
-# user/password is for clone non-public project such as LN.
+# user/password is used to clone non-public project such as LN.
 ARG branch=
 ARG owner="hpcc-systems"
 ARG user=
@@ -17,11 +17,11 @@ RUN set -ex; \
    cd HPCC-Platform; \
    if [ -n "${branch}" ] ; \
    then \
-      git tag | grep ${branch}; \
-      if [ $? -eq 0 ]; \
+      rc=$(git tag | grep ${branch}) || : ; \
+      if [ -n "$rc" ]; \
       then \
          git fetch && git fetch --tags; \
-      fi; \
+      else : ; fi; \
       git checkout ${branch}; \
    else : ; fi; \
    git submodule update --init --recursive; \

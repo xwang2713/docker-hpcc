@@ -18,7 +18,9 @@ RUN set -ex; \
 
 EXPOSE 8010 8002 8015 9876
 
-RUN cp -r /home/hpcc/.ssh ~/
+#COPY id_rsa* /home/hpcc/.ssh/
+
+#RUN cp -r /home/hpcc/.ssh ~/
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
 

@@ -4,8 +4,8 @@ ARG version=
 RUN if [ -z "${version}" ] ; then echo Missing HPCC version; exit 1; else : ; fi
 
 RUN yum update -y &&  yum install -y \
-#     curl \
-#     git  \
+     curl \
+     git  \
      java-1.8.0-openjdk \
      R-core-devel
 
@@ -23,21 +23,16 @@ RUN set -ex; \
     rm -rf RInside_0.2.12.tar.gz; \
     \
     chmod u+s $(which ping); \
-    groupadd hpcc && useradd -s /bin/bash -r -m -d /home/hpcc -g hpcc -c "hpcc Runtime User" hpcc; \
+    #groupadd hpcc && useradd -s /bin/bash -r -m -d /home/hpcc -g hpcc -c "hpcc Runtime User" hpcc; \
     \
     export VERSION_MMP=${version%-*}; \
-    export PLATFORM_PACKAGE=hpccsystems-platform-internal_${version}.el7.x86_64.rpm; \
-    wget  "http://10.240.32.242/builds/LN-Candidate-${VERSION_MMP}/bin/platform-withplugins/${PLATFORM_PACKAGE}"; \
+    export PLATFORM_PACKAGE=hpccsystems-clienttools-internal_${version}.el7.x86_64.rpm; \
+    wget  "http://10.240.32.242/builds/LN-Candidate-${VERSION_MMP}/bin/clienttools/${PLATFORM_PACKAGE}"; \
     #echo "$PLATFORM_DOWNLOAD_MD5 ${PLATFORM_PACKAGE}" | md5sum -c -; \
     yum install --nogpgcheck -y "${PLATFORM_PACKAGE}"; \
     rm -rf  "${PLATFORM_PACKAGE}"
 
 #RUN package-cleanup --leaves --all
-
-EXPOSE 8010 8002 8015 9876
-
-#COPY id_rsa* /home/hpcc/.ssh/
-#RUN cp -r /home/hpcc/.ssh ~/
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
