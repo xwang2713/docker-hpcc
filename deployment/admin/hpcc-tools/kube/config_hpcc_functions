@@ -30,7 +30,9 @@ function add_comp_to_envxml()
 
         [ "$env_in_tmp" != "${env_out_temp}" ] &&  env_in_temp=${env_out_temp}
     done
+    process_comp_settings ${_comp} $env_out_temp $env_out_temp
     cp $env_out_temp $env_out
+
 }
 
 function add_roxie_to_envxml()
@@ -57,6 +59,7 @@ function add_roxie_to_envxml()
 
         [ "$env_in_temp" != "${env_out_temp}" ] &&  env_in_temp=${env_out_temp}
     done
+    process_comp_settings roxie $env_out_temp $env_out_temp
     cp ${env_out_temp}  ${env_out}
 
 
@@ -116,6 +119,7 @@ function add_thor_to_envxml()
 
         [ "$env_in_temp" != "${env_out_temp}" ] &&  env_in_temp=${env_out_temp}
     done
+    process_comp_settings roxie $env_out_temp $env_out_temp
     cp ${env_out_temp}  ${env_out}
 }
 
@@ -206,4 +210,111 @@ function collect_ips()
     trials=$(expr $trials \- 1)
     sleep 5
   done
+}
+
+function process_category_settings()
+{
+    _env_in=$1
+    _env_out=$2
+    _tmp_file=/tmp/category_out
+    cp ${_env_in} ${_tmp_file}
+
+    category_props=/etc/hpcc_config_map/category.properties
+    [ ! -e "$category_props" ] && return
+
+    cmd="$SUDOCMD ${HPCC_HOME}/sbin/envgen2 -env-in ${_tmp_file} -env-out ${_tmp_file}"
+
+    while read line
+    do
+       line2=$(echo $line | grep "^[[:space:]]*[^#]")
+       [ -z "$line2" ] && continue
+       cmd="$cmd -o $line2"
+    done < ${category_props}
+    echo "$cmd"
+    eval "$cmd"
+    cp ${_tmp_file} ${_env_out}
+
+}
+
+function process_envgen2_settings()
+{
+    _file_in=$1
+    _env_in=$2
+    _env_out=$3
+    _tmp_file=/tmp/envgen2_out
+    cp ${_env_in} ${_tmp_file}
+
+    input_file=/etc/hpcc_config_map/${_file_in}
+    [ ! -e "$input_file" ] && return
+
+    cmd_base="$SUDOCMD ${HPCC_HOME}/sbin/envgen2 -env-in ${_tmp_file} -env-out ${_tmp_file}"
+    cat ${input_file} | grep "^[[:space:]]*[^#]" | while read line
+    do
+       cmd="${cmd_base} ${line}"
+       echo "$cmd"
+       eval "$cmd"
+    done
+    cp ${_tmp_file} ${_env_out}
+
+}
+
+function process_override_settings()
+{
+    _env_in=$1
+    _env_out=$2
+
+    override_file=/etc/hpcc_config_map/override.envgen2
+    [ ! -e "${override_file}" ] && return
+
+    cmd="$SUDOCMD ${HPCC_HOME}/sbin/envgen2 -env-in ${_env_in} -env-out ${_env_out}"
+    while read line
+    do
+      line2=$(echo $line | grep "^[[:space:]]*[^#]")
+      [ -z "$line2" ] && continue
+      export cmd="$cmd  -o $line2"
+    done < ${override_file}
+    echo "$cmd"
+    eval "$cmd"
+}
+
+function process_xpathattrs_settings()
+{
+    _env_in=$1
+    _env_out=$2
+
+    xpathattrs_file=/etc/hpcc_config_map/xpath_attributes.properties
+    [ ! -e "$xpathattrs" ] && return
+
+    cmd="$SUDOCMD ${HPCC_HOME}/sbin/envgen2 -env-in ${_env_in} -env-out ${_env_out}"
+    while read line
+    do
+      line2=$(echo $line | grep "^[[:space:]]*[^#]")
+      [ -z "$line2" ] && continue
+      setting=$(echo $line2 | sed -e 's/\\/\\\\\\/g' | tr [','] [' '] )
+      cmd="$cmd  -set-xpath-attrib-value ${setting}"
+    done < ${xpathattrs_file}
+    echo "$cmd"
+    eval "$cmd"
+}
+
+function add_xml_contents()
+{
+    _env_in=$1
+    _env_out=$2
+
+    _tmp_file=/tmp/xml_content_out
+    cp ${_env_in} ${_tmp_file}
+    cmd_base="$SUDOCMD ${HPCC_HOME}/sbin/envgen2 -env-in ${_tmp_file} -env-out ${_tmp_file}"
+    contents_dir=/etc/hpcc_config_map
+    ls ${contents_dir}/*.xml | sort | while read file
+    do
+      xpath=$(cat ${file} | grep "^[[:space:]]*<!\-\-[[:space:]]*XPATH:" | sed 's/XPATH://g' | sed 's/<!--//g' | sed 's/-->//g' | awk '{$1=$1};1')
+
+      [ -z "${xpath}" ] && continue
+      cmd="${cmd_base} -add-content ${xpath} ${file}"
+      echo "$cmd"
+      eval "$cmd"
+
+    done
+    cp ${_tmp_file} ${_env_out}
 }

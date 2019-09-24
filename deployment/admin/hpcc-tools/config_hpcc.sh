@@ -108,6 +108,7 @@ function create_simple_envxml()
 
     echo "$cmd"
     eval "$cmd"
+
 }
 
 function create_complex_envxml()
@@ -150,29 +151,37 @@ function create_complex_envxml()
        -supportnodes ${support_nodes} -roxieondemand 1 \
        -ipfile ${ipDir}/support"
 
+   process_comp_settings support ${wkDir}/${ENV_XML_FILE} ${wkDir}/${ENV_XML_FILE}
+
    spark_entry=$(grep sparkthor ${HPCC_HOME}/componentfiles/configxml/buildset.xml)
    [ "$spark_entry" = "sparkthor" ] && cmd="$cmd -rmv spark#mysparkthor:Instance@netAddress=."
 
    echo "$cmd"
    eval "$cmd"
 
-
-   cp   ${wkDir}/env_base.xml ${wkDir}/env_dali.xml
+   #cp   ${wkDir}/env_base.xml ${wkDir}/env_dali.xml
 
    if [ -e ${ipDir}/dali ]
    then
       ip=$(cat ${ipDir}/dali | sed 's/[[:space:]]//g; s/;//g')
       $SUDOCMD ${HPCC_HOME}/sbin/envgen2 -env-in ${wkDir}/${ENV_XML_FILE} \
           -env-out ${wkDir}/${ENV_XML_FILE} -mod-node dali#mydali@ip=${ip}
+
+      process_comp_settings dali ${wkDir}/${ENV_XML_FILE} ${wkDir}/${ENV_XML_FILE}
    fi
 
    if [ -e ${ipDir}/esp-* ]
    then
-      esp_ip=$(${HPCC_HOME}/sbin/configgen -env ${wkDir}/env_dali.xml -listall2 | grep EspProcess | cut -d',' -f3)
-      cmd="$SUDOCMD ${HPCC_HOME}/sbin/envgen2 -env-in ${wkDir}/${ENV_XML_FILE} -env-out ${wkDir}/${ENV_XML_FILE} \
-           -rmv sw:esp#myesp:Instance@netAddress=${esp_ip}"
-      echo "$cmd"
-      eval "$cmd"
+      esp_ip=$(${HPCC_HOME}/sbin/configgen -env ${wkDir}/${ENV_XML_FILE} -listall2 | grep EspProcess | cut -d',' -f3)
+      if [ -n "${esp_ip}" ]
+      then
+        cmd="$SUDOCMD ${HPCC_HOME}/sbin/envgen2 -env-in ${wkDir}/${ENV_XML_FILE} -env-out ${wkDir}/${ENV_XML_FILE} \
+            -rmv sw:esp#myesp:Instance@netAddress=${esp_ip}"
+
+        echo "$cmd"
+        eval "$cmd"
+      fi
+
    fi
 
    add_comp_to_envxml esp myesp ${wkDir}/${ENV_XML_FILE} ${wkDir}/${ENV_XML_FILE}
@@ -186,16 +195,17 @@ function create_complex_envxml()
    create_topology ${wkDir}/${ENV_XML_FILE} ${wkDir}/${ENV_XML_FILE}
 
    # Override attributes
-   ${ENV_XML_FILE}
-   cmd="$SUDOCMD ${HPCC_HOME}/sbin/envgen2 -env-in ${wkDir}/${ENV_XML_FILE} \
-       -env-out ${wkDir}/${ENV_XML_FILE}  \
-       -override roxie,@copyResources,true \
-       -override roxie,@roxieMulticastEnabled,false \
-       -override thor,@replicateOutputs,true \
-       -override esp,@method,htpasswd "
+   #${ENV_XML_FILE}
+   #cmd="$SUDOCMD ${HPCC_HOME}/sbin/envgen2 -env-in ${wkDir}/${ENV_XML_FILE} \
+   #    -env-out ${wkDir}/${ENV_XML_FILE}  \
+   #    -override roxie,@copyResources,true \
+   #    -override roxie,@roxieMulticastEnabled,false \
+   #    -override thor,@replicateOutputs,true \
+   #   -override esp,@method,htpasswd "
 
-   echo "$cmd"
-   eval "$cmd"
+   #echo "$cmd"
+   #eval "$cmd"
+
 }
 
 
@@ -208,6 +218,11 @@ function create_envxml()
    else
        create_complex_envxml
    fi
+
+   process_category_settings ${wkDir}/${ENV_XML_FILE} ${wkDir}/${ENV_XML_FILE}
+   process_override_settings ${wkDir}/${ENV_XML_FILE} ${wkDir}/${ENV_XML_FILE}
+   process_xpathattrs_settings ${wkDir}/${ENV_XML_FILE} ${wkDir}/${ENV_XML_FILE}
+   add_xml_contents ${wkDir}/${ENV_XML_FILE} ${wkDir}/${ENV_XML_FILE}
 }
 
 function adjust_node_type_for_ansible()

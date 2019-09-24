@@ -68,6 +68,7 @@ def main():
                  pod_name.startswith('dropzone')  or
                  pod_name.startswith('support')   or
                  pod_name.startswith('spark')     or
+                 pod_name.startswith('ldap')     or
                  pod_name.startswith('node')):
 
                  if state == 'Running':

@@ -203,3 +203,28 @@ function collect_ips()
     sleep 5
   done
 }
+
+function process_category_settings()
+{
+   return
+}
+
+function process_override_settings()
+{
+   return
+}
+
+function process_xpathattrs_settings()
+{
+   return
+}
+
+function process_comp_settings()
+{
+   return
+}
+
+function add_xml_contents()
+{
+   return
+}

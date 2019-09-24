@@ -43,6 +43,7 @@ class CollectIPsFromKube (CollectIPs):
                  node_name.startswith('dropzone')  or
                  node_name.startswith('support')   or
                  node_name.startswith('spark')     or
+                 node_name.startswith('ldap ')     or
                  node_name.startswith('node')):
                 print("node name: " + node_name)
                 print("node ip: " + node_ip)
